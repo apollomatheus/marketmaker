@@ -3,6 +3,9 @@ project(marketmaker C)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/;${CMAKE_MODULE_PATH}")
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 include(FindCURL)
 find_package(CURL REQUIRED)
 
@@ -61,6 +64,7 @@ set(SOURCE_FILES
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 include_directories(${DEPS_INSTALL_PREFIX}/include)
 target_link_libraries(${PROJECT_NAME} crypto777 jpeg secp256k1 ${CURL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} Threads::Threads)
 if(UNIX)
     target_link_libraries(${PROJECT_NAME} m)
 endif()
