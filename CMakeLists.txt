@@ -41,6 +41,7 @@ download_project(PROJ nanomsg
         GIT_REPOSITORY  https://github.com/nanomsg/nanomsg.git
         GIT_TAG         1.1.2
         GIT_SHALLOW     1
+        GIT_PROGRESS    1
         CMAKE_ARGS      "-DNN_ENABLE_DOC=OFF -DNN_TESTS=OFF -DNN_TOOLS=OFF -DNN_ENABLE_NANOCAT=OFF -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_PREFIX}"
         UPDATE_DISCONNECTED 1
         )
