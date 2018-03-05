@@ -502,7 +502,7 @@ uint8_t *JPG_decrypt(uint16_t *indp,int32_t *recvlenp,uint8_t space[JPG_ENCRYPTE
 }
 
 // from https://github.com/owencm/C-Steganography-Framework
-#include "jpeg/cdjpeg.h" // Common decls for compressing and decompressing jpegs
+#include "cdjpeg.h" // Common decls for compressing and decompressing jpegs
 
 int32_t LP_jpg_process(int32_t *capacityp,char *inputfname,char *outputfname,uint8_t *decoded,uint8_t *origdata,int32_t origrequired,int32_t power2,char *password,uint16_t *indp)
 {

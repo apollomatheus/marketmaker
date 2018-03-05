@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2)
-project(marketmaker)
+project(marketmaker C)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/;${CMAKE_MODULE_PATH}")
 
@@ -26,9 +26,6 @@ set(CMAKE_C_STANDARD 99)
 
 if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
     add_compile_options(-fdata-sections -ffunction-sections)
-#    link_libraries(--gc-sections --print-gc-sections)
-    # add_compile_options(-Werror -Wall -Wno-sign-compare -Wmissing-declarations -Wcast-qual -Wwrite-strings)
-    # add_compile_options(-Wstrict-prototypes -Wmissing-prototypes)
 endif ()
 
 if(WIN32)
@@ -36,13 +33,20 @@ if(WIN32)
     add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING)
 endif()
 
-set(CFLAGS_LIST ${CMAKE_C_FLAGS})
-separate_arguments(CFLAGS_LIST)
+set(DEPS_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install)
+
+include(DownloadProject.cmake)
+
+download_project(PROJ nanomsg
+        GIT_REPOSITORY  https://github.com/nanomsg/nanomsg.git
+        GIT_TAG         1.1.2
+        GIT_SHALLOW     1
+        CMAKE_ARGS      "-DNN_ENABLE_DOC=OFF -DNN_TESTS=OFF -DNN_TOOLS=OFF -DNN_ENABLE_NANOCAT=OFF -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_PREFIX}"
+        UPDATE_DISCONNECTED 1
+        )
 
 set(SOURCE_FILES
         src/main/mm.c
-        src/main/cJSON.c
-        src/main/cJSON.h
         src/main/groestl.c
         src/main/groestl.h
         src/main/mini-gmp.c
@@ -52,42 +56,34 @@ set(SOURCE_FILES
         )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-target_compile_options(${PROJECT_NAME} PUBLIC ${C_WARNINGS})
+include_directories(${DEPS_INSTALL_PREFIX}/include)
 target_link_libraries(${PROJECT_NAME} crypto777 jpeg secp256k1 ${CURL_LIBRARIES})
+if(UNIX)
+    target_link_libraries(${PROJECT_NAME} m)
+endif()
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} wsock32 ws2_32)
 endif()
 
+
+add_subdirectory(secp256k1)
+include_directories(secp256k1/include)
+
+add_subdirectory(jpeg)
+include_directories(jpeg)
+
+add_subdirectory(crypto777)
+include_directories(crypto777/includes)
+
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 
-include(DownloadProject.cmake)
-download_project(PROJ supernet
-        GIT_REPOSITORY  https://github.com/eliezio/SuperNET.git
-        GIT_TAG         cmake
-        GIT_SHALLOW     1
-        UPDATE_DISCONNECTED 1
-        )
-add_subdirectory(${supernet_SOURCE_DIR} ${supernet_BINARY_DIR} EXCLUDE_FROM_ALL)
+include_directories(src/main)
 
-include_directories("src/main"
-        ${supernet_SOURCE_DIR}/iguana/secp256k1/include
-        ${supernet_SOURCE_DIR}/crypto777
-        ${supernet_SOURCE_DIR}/includes
-        ${CMAKE_BINARY_DIR}/include)
-
-download_project(PROJ nanomsg
-        GIT_REPOSITORY  https://github.com/nanomsg/nanomsg.git
-        GIT_TAG         1.1.2
-        GIT_SHALLOW     1
-        UPDATE_DISCONNECTED 1
-        )
-
-add_subdirectory(${nanomsg_SOURCE_DIR} ${nanomsg_BINARY_DIR} EXCLUDE_FROM_ALL)
 target_link_libraries(${PROJECT_NAME} nanomsg)
 
 set(CPACK_SET_DESTDIR ON)
 
-set(CPACK_PACKAGE_NAME "marketmaker")
+set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
 set(CPACK_PACKAGE_VENDOR "The SuperNET Developers")
 set(CPACK_PACKAGE_CONTACT "Eliezio Oliveira <eliezio@protonmail.com>")
 set(CPACK_PACKAGE_VERSION_MAJOR ${VERSION_MAJOR})

@@ -40,34 +40,13 @@ char *stats_JSON(void *ctx,char *myipaddr,int32_t pubsock,cJSON *argjson,char *r
 #include "stats.c"
 void LP_priceupdate(char *base,char *rel,double price,double avebid,double aveask,double highbid,double lowask,double PAXPRICES[32]);
 
-//defined(__APPLE__) ||
-#ifdef FROM_JS // defined(WIN32) || defined(USE_STATIC_NANOMSG)
-#include "../../crypto777/nanosrc/nn.h"
-#include "../../crypto777/nanosrc/bus.h"
-#include "../../crypto777/nanosrc/pubsub.h"
-#include "../../crypto777/nanosrc/pipeline.h"
-#include "../../crypto777/nanosrc/reqrep.h"
-#include "../../crypto777/nanosrc/tcp.h"
-#include "../../crypto777/nanosrc/pair.h"
-#else
-#if defined(WIN32) || defined(USE_STATIC_NANOMSG)
-	#include "../../crypto777/nanosrc/nn.h"
-	#include "../../crypto777/nanosrc/bus.h"
-	#include "../../crypto777/nanosrc/pubsub.h"
-	#include "../../crypto777/nanosrc/pipeline.h"
-	#include "../../crypto777/nanosrc/reqrep.h"
-	#include "../../crypto777/nanosrc/tcp.h"
-	#include "../../crypto777/nanosrc/pair.h"
-#else
-	#include "/usr/local/include/nanomsg/nn.h"
-	#include "/usr/local/include/nanomsg/bus.h"
-	#include "/usr/local/include/nanomsg/pubsub.h"
-	#include "/usr/local/include/nanomsg/pipeline.h"
-	#include "/usr/local/include/nanomsg/reqrep.h"
-	#include "/usr/local/include/nanomsg/tcp.h"
-	#include "/usr/local/include/nanomsg/pair.h"
-#endif
-#endif
+#include "nanomsg/nn.h"
+#include "nanomsg/bus.h"
+#include "nanomsg/pubsub.h"
+#include "nanomsg/pipeline.h"
+#include "nanomsg/reqrep.h"
+#include "nanomsg/tcp.h"
+#include "nanomsg/pair.h"
 
 
 #include "LP_nativeDEX.c"
