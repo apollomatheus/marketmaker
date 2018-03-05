@@ -62,8 +62,9 @@ install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 
 include(DownloadProject.cmake)
 download_project(PROJ supernet
-        GIT_REPOSITORY https://github.com/eliezio/SuperNET.git
-        GIT_TAG cmake
+        GIT_REPOSITORY  https://github.com/eliezio/SuperNET.git
+        GIT_TAG         cmake
+        GIT_SHALLOW     1
         UPDATE_DISCONNECTED 1
         )
 add_subdirectory(${supernet_SOURCE_DIR} ${supernet_BINARY_DIR} EXCLUDE_FROM_ALL)
@@ -75,8 +76,9 @@ include_directories("src/main"
         ${CMAKE_BINARY_DIR}/include)
 
 download_project(PROJ nanomsg
-        GIT_REPOSITORY https://github.com/nanomsg/nanomsg.git
-        GIT_TAG 1.1.2
+        GIT_REPOSITORY  https://github.com/nanomsg/nanomsg.git
+        GIT_TAG         1.1.2
+        GIT_SHALLOW     1
         UPDATE_DISCONNECTED 1
         )
 
