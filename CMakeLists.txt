@@ -6,11 +6,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/;${CMAKE_MODULE_PATH}")
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-include(FindCURL)
-find_package(CURL REQUIRED)
-
 # VERSION value is set based on semantic version reported by "git describe"
-
 include(cmake/GetGitRevisionDescription.cmake)
 git_describe(VERSION "--dirty")
 # parse the version information into pieces.
@@ -52,6 +48,24 @@ download_project(PROJ nanomsg
 
 find_library(NANOMSG_LIBRARY NAMES nanomsg PATHS ${DEPS_INSTALL_PREFIX}/lib)
 
+# Download and install cURL at CMake configure time
+if(APPLE)
+    set(CURL_CMAKE_ARGS "-DCMAKE_USE_OPENSSL=OFF -DCMAKE_USE_DARWINSSL=ON")
+endif()
+if(WIN32)
+    set(CURL_CMAKE_ARGS "-DCMAKE_USE_OPENSSL=OFF -DCMAKE_USE_WINSSL=ON")
+endif()
+download_project(PROJ curl
+        GIT_REPOSITORY  https://github.com/curl/curl.git
+        GIT_TAG         curl-7_58_0
+        GIT_SHALLOW     1
+        GIT_PROGRESS    1
+        CMAKE_ARGS      "-DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_PREFIX} ${CURL_CMAKE_ARGS}"
+        UPDATE_DISCONNECTED 1
+        )
+
+find_library(CURL_LIBRARY NAMES curl PATHS ${DEPS_INSTALL_PREFIX}/lib)
+
 # dependencies as submodules
 add_subdirectory(secp256k1)
 add_subdirectory(jpeg)
@@ -73,7 +87,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         secp256k1/include
         jpeg
         crypto777/includes)
-target_link_libraries(${PROJECT_NAME} ${NANOMSG_LIBRARY} crypto777 jpeg secp256k1 ${CURL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${NANOMSG_LIBRARY} crypto777 jpeg secp256k1 ${CURL_LIBRARY})
 target_link_libraries(${PROJECT_NAME} Threads::Threads)
 if(UNIX)
     target_link_libraries(${PROJECT_NAME} m)
