@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.2)
-project(marketmaker C)
+cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
+project(marketmaker LANGUAGES C)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/;${CMAKE_MODULE_PATH}")
 
@@ -8,6 +8,8 @@ find_package(Threads REQUIRED)
 
 include(FindCURL)
 find_package(CURL REQUIRED)
+
+# VERSION value is set based on semantic version reported by "git describe"
 
 include(cmake/GetGitRevisionDescription.cmake)
 git_describe(VERSION "--dirty")
@@ -22,7 +24,6 @@ set(VERSION_SHORT "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 set(PACKAGE_RELEASE "1")    # fixed
 message(STATUS "Version set to: " ${VERSION})
 
-configure_file(version.h.in include/version.h @ONLY)
 configure_file(version_short.txt.in version_short.txt @ONLY)
 
 set(CMAKE_C_STANDARD 99)
@@ -32,14 +33,14 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL
 endif ()
 
 if(WIN32)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_WINSOCK_DEPRECATED_NO_WARNINGS)
-    add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 set(DEPS_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install)
 
-include(DownloadProject.cmake)
+include(cmake/DownloadProject.cmake)
 
+# Download and install nanomsg at CMake configure time
 download_project(PROJ nanomsg
         GIT_REPOSITORY  https://github.com/nanomsg/nanomsg.git
         GIT_TAG         1.1.2
@@ -49,7 +50,12 @@ download_project(PROJ nanomsg
         UPDATE_DISCONNECTED 1
         )
 
-link_directories(${DEPS_INSTALL_PREFIX}/lib)
+find_library(NANOMSG_LIBRARY NAMES nanomsg PATHS ${DEPS_INSTALL_PREFIX}/lib)
+
+# dependencies as submodules
+add_subdirectory(secp256k1)
+add_subdirectory(jpeg)
+add_subdirectory(crypto777)
 
 set(SOURCE_FILES
         src/main/mm.c
@@ -62,8 +68,12 @@ set(SOURCE_FILES
         )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-include_directories(${DEPS_INSTALL_PREFIX}/include)
-target_link_libraries(${PROJECT_NAME} crypto777 jpeg secp256k1 ${CURL_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PRIVATE
+        ${DEPS_INSTALL_PREFIX}/include
+        secp256k1/include
+        jpeg
+        crypto777/includes)
+target_link_libraries(${PROJECT_NAME} ${NANOMSG_LIBRARY} crypto777 jpeg secp256k1 ${CURL_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} Threads::Threads)
 if(UNIX)
     target_link_libraries(${PROJECT_NAME} m)
@@ -72,21 +82,7 @@ if(WIN32)
     target_link_libraries(${PROJECT_NAME} wsock32 ws2_32)
 endif()
 
-
-add_subdirectory(secp256k1)
-include_directories(secp256k1/include)
-
-add_subdirectory(jpeg)
-include_directories(jpeg)
-
-add_subdirectory(crypto777)
-include_directories(crypto777/includes)
-
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
-
-include_directories(src/main)
-
-target_link_libraries(${PROJECT_NAME} nanomsg)
 
 set(CPACK_SET_DESTDIR ON)
 
