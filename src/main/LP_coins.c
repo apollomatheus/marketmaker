@@ -18,7 +18,7 @@
 //  marketmaker
 //
 
-char *portstrs[][3] = { { "BTC", "8332" }, { "KMD", "7771" } };
+char *portstrs[][3] = { { "BTC", "8332" }, { "ZCR", "17291" } };
 
 uint16_t LP_rpcport(char *symbol)
 {
@@ -135,6 +135,13 @@ void LP_statefname(char *fname,char *symbol,char *assetname,char *str,char *name
 #else
     strcat(fname,"/");
 #endif
+    if ( strcmp(symbol,"ZCR") == 0 ) {
+#if defined(__APPLE__) || defined(NATIVE_WINDOWS)
+	strcat(fname, "ZCoreCore");
+#else
+	strcat(fname,".zcore")
+#endif
+    }
     if ( strcmp(symbol,"BTC") == 0 )
     {
 #if defined(__APPLE__) || defined(NATIVE_WINDOWS)
@@ -444,14 +451,23 @@ struct iguana_info *LP_coinfind(char *symbol)
         wiftype = 128;
         name = "bitcoin";
     }
+    else if ( strcmp(symbol,"ZCR") == 0 ) {
+        pubtype = 50;
+        p2shtype = 0;
+        wiftype = 50;
+        name = "zcore";
+    }
     else if ( strcmp(symbol,"KMD") == 0 )
         name = "komodo";
     else return(0);
     port = LP_coininit(&cdata,symbol,name,assetname,isPoS,port,pubtype,p2shtype,wiftype,txfee,estimatedrate,longestchain,0,0,busport,0);
+
     if ( port == 0 )
         isinactive = 1;
-    else isinactive = 0;
-    if ( (coin= LP_coinadd(&cdata)) != 0 )
+    else 
+	isinactive = 0;
+
+    if ( (coin = LP_coinadd(&cdata)) != 0 )
     {
         coin->inactive = isinactive * (uint32_t)time(NULL);
         /*if ( strcmp(symbol,"KMD") == 0 )
